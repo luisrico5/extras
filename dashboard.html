@@ -305,6 +305,7 @@ td.td-novedad{white-space:normal;text-align:left;max-width:240px;}
     -webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;
   }
   .print-table th{background:#eee;}
+  .print-table td.pdf-legend-cell{font-weight:600;}
   .print-table tr.row-festivo td{background:#ddd1f5;}
   .print-table tr.row-domingo td{background:#f6cdd2;}
   .print-table tr.row-sabado td{background:#f7eac0;}
@@ -1281,13 +1282,26 @@ function exportPDF(){
     var isSabado = dow === 6;
     var rowClass = isFestivo ? "row-festivo" : (isDomingo ? "row-domingo" : (isSabado ? "row-sabado" : ""));
     var data = getDayData(dateStr);
-    var ingreso = validTime(data.ingreso) ? data.ingreso : "-";
-    var salida = validTime(data.salida) ? data.salida : "-";
-    var notaParts = [];
-    if(NOVEDADES.indexOf(data.jornada) !== -1) notaParts.push(data.jornada);
-    if(data.novedad) notaParts.push(data.novedad);
-    var nota = notaParts.length ? notaParts.join(" — ") : "-";
-    html += "<tr"+(rowClass?" class=\""+rowClass+"\"":"")+"><td>"+escapeHtml(fmtDate(date))+"</td><td>"+escapeHtml(ingreso)+"</td><td>"+escapeHtml(salida)+"</td><td>"+escapeHtml(nota)+"</td></tr>";
+    var hasHorario = validTime(data.ingreso) && validTime(data.salida);
+    var isNovedadType = NOVEDADES.indexOf(data.jornada) !== -1;
+    var isDescanso = data.jornada === "Descanso";
+    var isLegendRow = isNovedadType || (isDescanso && !hasHorario);
+
+    if(isLegendRow){
+      var legendParts = [data.jornada];
+      if(hasHorario) legendParts.push("("+data.ingreso+"-"+data.salida+")");
+      if(data.novedad) legendParts.push("— "+data.novedad);
+      var legendTxt = legendParts.join(" ");
+      html += "<tr"+(rowClass?" class=\""+rowClass+"\"":"")+"><td>"+escapeHtml(fmtDate(date))+"</td><td colspan=\"3\" class=\"pdf-legend-cell\">"+escapeHtml(legendTxt)+"</td></tr>";
+    } else {
+      var ingreso = hasHorario ? data.ingreso : "-";
+      var salida = hasHorario ? data.salida : "-";
+      var notaParts = [];
+      if(isDescanso) notaParts.push("Descanso");
+      if(data.novedad) notaParts.push(data.novedad);
+      var nota = notaParts.length ? notaParts.join(" — ") : "-";
+      html += "<tr"+(rowClass?" class=\""+rowClass+"\"":"")+"><td>"+escapeHtml(fmtDate(date))+"</td><td>"+escapeHtml(ingreso)+"</td><td>"+escapeHtml(salida)+"</td><td>"+escapeHtml(nota)+"</td></tr>";
+    }
   });
 
   html += "</tbody></table>";
