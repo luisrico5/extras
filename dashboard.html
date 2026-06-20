@@ -296,11 +296,18 @@ td.td-novedad{white-space:normal;text-align:left;max-width:240px;}
   .print-area{
     display:block;position:absolute;left:0;top:0;width:100%;
     background:#fff;color:#000;padding:12px;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;
   }
   .print-area h1{font-size:15px;margin:0 0 10px;text-align:center;}
   .print-table{width:100%;border-collapse:collapse;font-size:11px;}
-  .print-table th,.print-table td{border:1px solid #333;padding:4px 6px;text-align:left;}
+  .print-table th,.print-table td{
+    border:1px solid #333;padding:4px 6px;text-align:left;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;
+  }
   .print-table th{background:#eee;}
+  .print-table tr.row-festivo td{background:#ddd1f5;}
+  .print-table tr.row-domingo td{background:#f6cdd2;}
+  .print-table tr.row-sabado td{background:#f7eac0;}
 }
 
 /* ---------- Legend ---------- */
@@ -1268,6 +1275,11 @@ function exportPDF(){
 
   days.forEach(function(date){
     var dateStr = toISODate(date);
+    var dow = date.getDay();
+    var isFestivo = !!FESTIVOS[dateStr];
+    var isDomingo = dow === 0;
+    var isSabado = dow === 6;
+    var rowClass = isFestivo ? "row-festivo" : (isDomingo ? "row-domingo" : (isSabado ? "row-sabado" : ""));
     var data = getDayData(dateStr);
     var ingreso = validTime(data.ingreso) ? data.ingreso : "-";
     var salida = validTime(data.salida) ? data.salida : "-";
@@ -1275,7 +1287,7 @@ function exportPDF(){
     if(NOVEDADES.indexOf(data.jornada) !== -1) notaParts.push(data.jornada);
     if(data.novedad) notaParts.push(data.novedad);
     var nota = notaParts.length ? notaParts.join(" — ") : "-";
-    html += "<tr><td>"+escapeHtml(fmtDate(date))+"</td><td>"+escapeHtml(ingreso)+"</td><td>"+escapeHtml(salida)+"</td><td>"+escapeHtml(nota)+"</td></tr>";
+    html += "<tr"+(rowClass?" class=\""+rowClass+"\"":"")+"><td>"+escapeHtml(fmtDate(date))+"</td><td>"+escapeHtml(ingreso)+"</td><td>"+escapeHtml(salida)+"</td><td>"+escapeHtml(nota)+"</td></tr>";
   });
 
   html += "</tbody></table>";
