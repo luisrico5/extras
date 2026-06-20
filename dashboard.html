@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Horas Extras y Recargos · Colombia</title>
+<style>
+:root{
+  --bg:#0F172A;
+  --surface:#1E293B;
+  --surface-2:#26334a;
+  --primary:#6366F1;
+  --secondary:#F59E0B;
+  --text:#F1F5F9;
+  --text-secondary:#94A3B8;
+  --border:rgba(255,255,255,.08);
+  --col-festivo:#4c3a7d;
+  --col-domingo:#6b2c33;
+  --col-sabado:#6b5424;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:14px;
+  line-height:1.4;
+  -webkit-text-size-adjust:100%;
+}
+.app{max-width:1180px;margin:0 auto;padding:12px;}
+
+/* ---------- Header ---------- */
+.topbar{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.topbar h1{
+  font-size:17px;
+  margin:0 0 10px;
+  font-weight:700;
+  letter-spacing:.2px;
+}
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+.controls select{
+  background:var(--surface-2);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:13px;
+  flex:1 1 110px;
+}
+.nav-btn{
+  background:var(--surface-2);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:8px;
+  width:36px;
+  height:36px;
+  font-size:16px;
+  cursor:pointer;
+}
+.nav-btn:hover{background:var(--primary);}
+.btn-export{
+  background:var(--secondary);
+  color:#1a1305;
+  border:none;
+  border-radius:8px;
+  padding:9px 14px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  margin-left:auto;
+}
+.btn-export:hover{filter:brightness(1.08);}
+.btn-sync{
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:9px 14px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+}
+.btn-sync:hover{filter:brightness(1.1);}
+
+/* ---------- Modal sincronización ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;z-index:50;
+}
+.modal-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;
+}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.modal-head h2{font-size:15px;margin:0;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--text-secondary);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;}
+.sync-status{font-size:12px;color:var(--text-secondary);margin:6px 0 12px;}
+.sync-label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px;}
+.sync-textarea{
+  width:100%;background:rgba(15,23,42,.55);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:8px;font-size:12px;font-family:monospace;margin-bottom:10px;resize:vertical;
+}
+.sync-input{
+  width:100%;background:rgba(15,23,42,.55);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;font-size:13px;margin-bottom:8px;
+}
+.sync-btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-sync-action{
+  background:var(--primary);color:#fff;border:none;border-radius:8px;
+  padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;margin-top:4px;margin-right:6px;
+}
+.btn-sync-action:hover{filter:brightness(1.1);}
+#btnResetSyncConfig{background:var(--surface-2);color:var(--text);}
+.period-label{
+  margin-top:10px;
+  font-size:13px;
+  color:var(--text-secondary);
+}
+.period-label b{color:var(--text);}
+
+/* ---------- Calendar ---------- */
+.calendar-section{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:14px;
+}
+.weekday-header{
+  display:none;
+  gap:8px;
+  margin-bottom:8px;
+  padding:0 2px;
+}
+.weekday-header span{
+  text-align:center;
+  font-size:11px;
+  color:var(--text-secondary);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.calendar-grid{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.day-cell{
+  background:var(--surface-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-height:48px;
+}
+.day-cell.week-start{margin-top:6px;border-top:1px dashed rgba(255,255,255,.18);padding-top:10px;}
+.day-cell.festivo{background-color:var(--col-festivo);}
+.day-cell.domingo{background-color:var(--col-domingo);}
+.day-cell.sabado{background-color:var(--col-sabado);}
+.day-cell.outside{
+  opacity:.4;
+  min-height:30px;
+  filter:grayscale(.4);
+}
+.day-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+}
+.day-num{font-size:15px;font-weight:700;}
+.day-dow{font-size:11px;color:var(--text-secondary);text-transform:uppercase;}
+.day-cell.festivo .day-dow,.day-cell.domingo .day-dow,.day-cell.sabado .day-dow{color:rgba(241,245,249,.75);}
+.day-festname{font-size:10px;color:var(--text-secondary);margin-top:-4px;}
+.jornada-select{
+  width:100%;
+  background:rgba(15,23,42,.55);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:6px 4px;
+  font-size:12px;
+}
+.time-row{display:flex;gap:6px;}
+.time-input{
+  flex:1 1 0;
+  width:100%;
+  background:rgba(15,23,42,.55);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:6px 4px;
+  font-size:12px;
+  text-align:center;
+}
+.time-input::placeholder{color:var(--text-secondary);opacity:.7;}
+
+/* ---------- Summary table ---------- */
+.summary-section{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:14px;
+}
+.summary-section h2{font-size:14px;margin:0 0 10px;font-weight:700;}
+.table-scroll{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:12px;}
+thead th{
+  background:var(--surface-2);
+  color:var(--text-secondary);
+  font-weight:600;
+  text-align:center;
+  padding:8px 6px;
+  white-space:nowrap;
+  border-bottom:1px solid var(--border);
+}
+tbody td, tfoot td{
+  text-align:center;
+  padding:7px 6px;
+  white-space:nowrap;
+  border-bottom:1px solid var(--border);
+}
+td.sticky-col,th.sticky-col{
+  text-align:left;
+  position:sticky;
+  left:0;
+  z-index:2;
+  background:var(--surface-2);
+}
+tr.row-festivo td{background-color:var(--col-festivo);}
+tr.row-domingo td{background-color:var(--col-domingo);}
+tr.row-sabado td{background-color:var(--col-sabado);}
+tfoot tr{font-weight:700;}
+tfoot td{border-top:2px solid var(--primary);border-bottom:none;background:var(--surface-2);}
+.badge-novedad{
+  display:inline-block;
+  background:#ffffff;
+  color:#0F172A;
+  border-radius:8px;
+  padding:4px 12px;
+  font-weight:600;
+  font-size:12px;
+  white-space:nowrap;
+  box-shadow:0 1px 2px rgba(0,0,0,.25);
+}
+td.td-badge-row{padding:7px 10px;}
+
+/* ---------- Legend ---------- */
+.legend{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  font-size:11.5px;
+  color:var(--text-secondary);
+}
+.legend h2{font-size:13px;margin:0 0 8px;color:var(--text);font-weight:700;}
+.legend-swatches{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+.swatch{display:flex;align-items:center;gap:6px;}
+.swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+.legend-grid{display:grid;grid-template-columns:1fr;gap:4px;}
+@media (min-width:560px){.legend-grid{grid-template-columns:1fr 1fr;}}
+
+/* ---------- Desktop ---------- */
+@media (min-width:768px){
+  body{font-size:15px;}
+  .weekday-header{display:grid;grid-template-columns:repeat(7,1fr);}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+  .day-cell.week-start{margin-top:0;border-top:none;padding-top:8px;}
+  .topbar h1{font-size:19px;}
+  .day-num{font-size:16px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <h1>Horas Extras y Recargos · Colombia</h1>
+    <div class="controls">
+      <button class="nav-btn" id="btnPrev" type="button" aria-label="Periodo anterior">‹</button>
+      <select id="selMes" aria-label="Mes"></select>
+      <select id="selAnio" aria-label="Año"></select>
+      <button class="nav-btn" id="btnNext" type="button" aria-label="Periodo siguiente">›</button>
+      <button class="btn-export" id="btnExport" type="button">Exportar periodo</button>
+      <button class="btn-sync" id="btnSync" type="button">Sincronización</button>
+    </div>
+    <div class="period-label" id="periodLabel"></div>
+  </header>
+
+  <main>
+    <section class="calendar-section">
+      <div class="weekday-header">
+        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </section>
+
+    <section class="summary-section">
+      <h2>Resumen del periodo</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="sticky-col">Día</th>
+              <th>Ext.Diurna</th>
+              <th>Ext.Nocturna</th>
+              <th>Rec.Nocturno</th>
+              <th>FC</th>
+              <th>FNC</th>
+              <th>DTDO</th>
+              <th>Ext.D.Fest</th>
+              <th>Ext.N.Fest</th>
+              <th>RD</th>
+              <th>DT</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+          <tfoot id="summaryFoot"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="legend">
+      <h2>Leyenda</h2>
+      <div class="legend-swatches">
+        <div class="swatch"><i style="background:var(--col-festivo)"></i> Festivo</div>
+        <div class="swatch"><i style="background:var(--col-domingo)"></i> Domingo</div>
+        <div class="swatch"><i style="background:var(--col-sabado)"></i> Sábado</div>
+        <div class="swatch"><i style="background:var(--surface-2);opacity:.5"></i> Fuera de periodo</div>
+      </div>
+      <div class="legend-grid">
+        <div>Ext.Diurna — Hora extra diurna normal</div>
+        <div>Ext.Nocturna — Hora extra nocturna normal</div>
+        <div>Rec.Nocturno — Recargo nocturno (18:00–06:00)</div>
+        <div>FC — Feriado Compensado (domingo en Turno)</div>
+        <div>FNC — Feriado No Compensado (festivo en Turno)</div>
+        <div>DTDO — Descanso Trabajado Ordinario</div>
+        <div>Ext.D.Fest — Extra diurna festiva/dominical</div>
+        <div>Ext.N.Fest — Extra nocturna festiva/dominical</div>
+        <div>RD — Recargo por Descanso</div>
+        <div>DT — Descanso Trabajado (sábado)</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="syncOverlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Sincronización entre dispositivos</h2>
+      <button class="modal-close" id="btnCloseSync" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <p class="sync-status" id="syncStatus">Sin configurar. Tus datos se guardan solo en este dispositivo.</p>
+
+    <div id="syncConfigBlock">
+      <label class="sync-label">1. Pega aquí el objeto "firebaseConfig" de tu proyecto Firebase (Configuración del proyecto → tu app web):</label>
+      <textarea id="syncConfigInput" class="sync-textarea" rows="6" placeholder='{ apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." }'></textarea>
+      <button class="btn-sync-action" id="btnSaveSyncConfig" type="button">Guardar configuración</button>
+    </div>
+
+    <div id="syncAuthBlock" style="display:none;">
+      <label class="sync-label">2. Usa el mismo correo y contraseña en tus 3 dispositivos:</label>
+      <input type="email" id="syncEmail" class="sync-input" placeholder="correo@ejemplo.com" autocomplete="username">
+      <input type="password" id="syncPassword" class="sync-input" placeholder="Contraseña" autocomplete="current-password">
+      <div class="sync-btn-row">
+        <button class="btn-sync-action" id="btnSyncSignup" type="button">Crear cuenta</button>
+        <button class="btn-sync-action" id="btnSyncLogin" type="button">Iniciar sesión</button>
+      </div>
+    </div>
+
+    <div id="syncLoggedBlock" style="display:none;">
+      <p class="sync-status" id="syncLoggedEmail"></p>
+      <button class="btn-sync-action" id="btnSyncLogout" type="button">Cerrar sesión</button>
+      <button class="btn-sync-action" id="btnResetSyncConfig" type="button">Cambiar configuración</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============ FESTIVOS 2025-2027 (fuente: hoja Festivos, 56 filas) ============ */
+var FESTIVOS = {
+  "2025-01-01":"Año Nuevo",
+  "2025-01-06":"Reyes Magos",
+  "2025-03-24":"San José",
+  "2025-04-17":"Jueves Santo",
+  "2025-04-18":"Viernes Santo",
+  "2025-05-01":"Día del Trabajo",
+  "2025-06-02":"Ascensión",
+  "2025-06-23":"Corpus Christi",
+  "2025-06-30":"San Pedro y San Pablo / Sagrado Corazón",
+  "2025-07-20":"Independencia",
+  "2025-08-07":"Batalla de Boyacá",
+  "2025-08-18":"Asunción de la Virgen",
+  "2025-10-13":"Día de la Raza",
+  "2025-11-03":"Todos los Santos",
+  "2025-11-17":"Independencia de Cartagena",
+  "2025-12-08":"Inmaculada Concepción",
+  "2025-12-25":"Navidad",
+  "2026-01-01":"Año Nuevo",
+  "2026-01-12":"Reyes Magos",
+  "2026-03-23":"San José",
+  "2026-04-02":"Jueves Santo",
+  "2026-04-03":"Viernes Santo",
+  "2026-05-01":"Día del Trabajo",
+  "2026-05-18":"Ascensión",
+  "2026-06-08":"Corpus Christi",
+  "2026-06-15":"Sagrado Corazón",
+  "2026-06-29":"San Pedro y San Pablo",
+  "2026-07-13":"Virgen de Chiquinquirá",
+  "2026-07-20":"Independencia",
+  "2026-08-07":"Batalla de Boyacá",
+  "2026-08-17":"Asunción de la Virgen",
+  "2026-10-12":"Día de la Raza",
+  "2026-11-02":"Todos los Santos",
+  "2026-11-16":"Independencia de Cartagena",
+  "2026-12-08":"Inmaculada Concepción",
+  "2026-12-25":"Navidad",
+  "2027-01-01":"Año Nuevo",
+  "2027-01-11":"Reyes Magos",
+  "2027-03-22":"San José",
+  "2027-03-25":"Jueves Santo",
+  "2027-03-26":"Viernes Santo",
+  "2027-05-01":"Día del Trabajo",
+  "2027-05-10":"Ascensión",
+  "2027-05-31":"Corpus Christi",
+  "2027-06-07":"Sagrado Corazón",
+  "2027-07-05":"San Pedro y San Pablo",
+  "2027-07-12":"Virgen de Chiquinquirá",
+  "2027-07-20":"Independencia",
+  "2027-08-07":"Batalla de Boyacá",
+  "2027-08-16":"Asunción de la Virgen",
+  "2027-10-18":"Día de la Raza",
+  "2027-11-01":"Todos los Santos",
+  "2027-11-15":"Independencia de Cartagena",
+  "2027-12-08":"Inmaculada Concepción",
+  "2027-12-25":"Navidad"
+};
+
+var MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+var DIAS_CORTO = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+var ANIOS = [2025,2026,2027];
+var JORNADAS = ["","Turno día (07-15)","Turno tarde (15-23)","Turno noche (23-07)","Ordinaria","Descanso","Permiso sindical","Permiso remunerado","Permiso no remunerado","Incapacidad","Vacaciones"];
+var NOVEDADES = ["Permiso sindical","Permiso remunerado","Permiso no remunerado","Incapacidad","Vacaciones"];
+var CAT_ORDER = ["extDiurna","extNocturna","recNocturno","fc","fnc","dtdo","extDFest","extNFest","rd","dt"];
+
+/* ============ Helpers de fecha/hora ============ */
+function toISODate(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function fmtDate(d){
+  return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();
+}
+function mondayOnOrBefore(date){
+  var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  var dow = (d.getDay()+6)%7; // 0=Lun
+  d.setDate(d.getDate()-dow);
+  return d;
+}
+function sundayOnOrAfter(date){
+  var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  var dow = (d.getDay()+6)%7;
+  d.setDate(d.getDate()+(6-dow));
+  return d;
+}
+function getPeriod(month, year){
+  var periodEnd = new Date(year, month-1, 10);
+  var psMonth = month-1, psYear = year;
+  if(psMonth < 1){ psMonth = 12; psYear = year-1; }
+  var periodStart = new Date(psYear, psMonth-1, 11);
+  return {periodStart:periodStart, periodEnd:periodEnd};
+}
+function validTime(v){
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(v || "");
+}
+function toMinutes(t){
+  var p = t.split(":");
+  return parseInt(p[0],10)*60+parseInt(p[1],10);
+}
+function formatHM(hoursDecimal){
+  if(!hoursDecimal || hoursDecimal<=0) return "00:00";
+  var totalMin = Math.round(hoursDecimal*60);
+  var h = Math.floor(totalMin/60), m = totalMin%60;
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+}
+function formatDecimal(hoursDecimal){
+  if(!hoursDecimal || hoursDecimal<=0) return "-";
+  return hoursDecimal.toFixed(2).replace(".",",");
+}
+function nightOverlap(s,e){
+  var total = 0;
+  for(var k=-1;k<=2;k++){
+    var ns = 1080+1440*k, ne = 1800+1440*k;
+    total += Math.max(0, Math.min(e,ne)-Math.max(s,ns));
+  }
+  return total;
+}
+
+/* ============ Motor de cálculo ============ */
+function zeroCats(){
+  return {extDiurna:0,extNocturna:0,recNocturno:0,fc:0,fnc:0,dtdo:0,extDFest:0,extNFest:0,rd:0,dt:0};
+}
+function calculateDay(jornada, ingreso, salida, isFestivo, isDomingo, isSabado){
+  var res = zeroCats();
+  if(!jornada) return res;
+  if(NOVEDADES.indexOf(jornada) !== -1) return res;
+  if(!validTime(ingreso) || !validTime(salida)) return res;
+
+  var startMin = toMinutes(ingreso);
+  var endMin = toMinutes(salida);
+  if(endMin <= startMin) endMin += 1440;
+
+  var dayType = isFestivo ? "festivo" : (isDomingo ? "domingo" : (isSabado ? "sabado" : "normal"));
+  var isTurno = jornada.indexOf("Turno") === 0;
+  var isOrdinaria = jornada === "Ordinaria";
+  var isDescanso = jornada === "Descanso";
+
+  var restRegime = (isTurno && (dayType==="domingo" || dayType==="festivo"))
+                 || (isOrdinaria && (dayType==="sabado" || dayType==="domingo" || dayType==="festivo"))
+                 || isDescanso;
+
+  var threshold = restRegime ? 8 : (isOrdinaria ? 8.5 : 8);
+  var thresholdMin = threshold*60;
+
+  var ordinaryEnd = Math.min(endMin, startMin+thresholdMin);
+  var ordinaryDur = Math.max(0, ordinaryEnd-startMin);
+  var extraStart = ordinaryEnd;
+  var extraDur = Math.max(0, endMin-extraStart);
+
+  var rnMin = nightOverlap(startMin, ordinaryEnd);
+  var extraNightMin = nightOverlap(extraStart, endMin);
+  var extraDayMin = Math.max(0, extraDur-extraNightMin);
+
+  res.recNocturno = rnMin/60;
+
+  if(dayType==="domingo" || dayType==="festivo"){
+    res.extDFest = extraDayMin/60;
+    res.extNFest = extraNightMin/60;
+  } else {
+    res.extDiurna = extraDayMin/60;
+    res.extNocturna = extraNightMin/60;
+  }
+
+  var ordinaryHours = ordinaryDur/60;
+  if(restRegime){
+    if(isTurno){
+      if(dayType==="domingo") res.fc = ordinaryHours;
+      else if(dayType==="festivo") res.fnc = ordinaryHours;
+    } else if(isOrdinaria){
+      if(dayType==="sabado"){
+        res.rd = ordinaryHours;
+      } else if(dayType==="domingo" || dayType==="festivo"){
+        res.rd = ordinaryHours;
+        res.dtdo = ordinaryHours;
+      }
+    } else if(isDescanso){
+      res.rd = ordinaryHours;
+      if(dayType==="sabado") res.dt = ordinaryHours;
+      else if(dayType==="domingo" || dayType==="festivo") res.dtdo = ordinaryHours;
+    }
+  }
+  return res;
+}
+
+/* ============ Persistencia (localStorage clave=fecha YYYY-MM-DD) ============ */
+function getDayData(dateStr){
+  var raw = localStorage.getItem(dateStr);
+  if(!raw) return {jornada:"", ingreso:"", salida:""};
+  try{
+    var obj = JSON.parse(raw);
+    return {jornada:obj.jornada||"", ingreso:obj.ingreso||"", salida:obj.salida||""};
+  }catch(e){
+    return {jornada:"", ingreso:"", salida:""};
+  }
+}
+function writeLocalDayData(dateStr, jornada, ingreso, salida){
+  if(!jornada && !ingreso && !salida){
+    localStorage.removeItem(dateStr);
+  } else {
+    localStorage.setItem(dateStr, JSON.stringify({jornada:jornada, ingreso:ingreso, salida:salida}));
+  }
+}
+function saveDayData(dateStr, jornada, ingreso, salida){
+  writeLocalDayData(dateStr, jornada, ingreso, salida);
+  onLocalDayChanged(dateStr, jornada, ingreso, salida);
+}
+
+/* ============ Sincronización en la nube (Firebase, opcional) ============
+   No reemplaza localStorage: cada fecha sigue viviendo en su propia clave
+   YYYY-MM-DD con el mismo {jornada,ingreso,salida} de siempre. La config
+   de Firebase y los timestamps de sincronización van en claves aparte
+   (__sync_config__ y __sync_meta__) para no tocar la estructura existente.
+   Si no hay config, o no hay internet, o el SDK no cargó: la app sigue
+   funcionando 100% en local exactamente como antes. */
+var SYNC_CONFIG_KEY = "__sync_config__";
+var SYNC_META_KEY = "__sync_meta__";
+var DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+var syncAuth = null, syncDb = null, syncUnsub = null, syncUid = null;
+
+function getSyncMeta(){
+  try{ return JSON.parse(localStorage.getItem(SYNC_META_KEY) || "{}"); }
+  catch(e){ return {}; }
+}
+function getSyncConfig(){
+  try{ return JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY) || "null"); }
+  catch(e){ return null; }
+}
+function parseFirebaseConfigSnippet(text){
+  try{
+    var body = text.slice(text.indexOf("{"), text.lastIndexOf("}")+1);
+    var jsonish = body.replace(/([{,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":').replace(/'/g, '"');
+    var cfg = JSON.parse(jsonish);
+    return cfg && cfg.apiKey ? cfg : null;
+  }catch(e){ return null; }
+}
+function setSyncStatus(msg){
+  if(syncStatusEl) syncStatusEl.textContent = msg;
+}
+
+function onLocalDayChanged(dateStr, jornada, ingreso, salida){
+  var ts = Date.now();
+  var meta = getSyncMeta();
+  meta[dateStr] = ts;
+  localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
+  if(syncDb && syncUid){
+    try{
+      syncDb.collection("users").doc(syncUid).collection("dias").doc(dateStr)
+        .set({jornada:jornada, ingreso:ingreso, salida:salida, updatedAtMs:ts}, {merge:true})
+        .catch(function(){});
+    }catch(e){}
+  }
+}
+
+function mergeCloudDoc(dateStr, remote){
+  var meta = getSyncMeta();
+  var localTs = meta[dateStr] || 0;
+  var remoteTs = remote.updatedAtMs || 0;
+  if(remoteTs > localTs){
+    writeLocalDayData(dateStr, remote.jornada||"", remote.ingreso||"", remote.salida||"");
+    meta[dateStr] = remoteTs;
+    localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
+    return true;
+  }
+  return false;
+}
+
+function pushNeverSyncedLocalDates(seen){
+  if(!syncDb || !syncUid) return;
+  var meta = getSyncMeta();
+  for(var i=0;i<localStorage.length;i++){
+    var key = localStorage.key(i);
+    if(!DATE_KEY_RE.test(key) || seen[key]) continue;
+    var data = getDayData(key);
+    if(!data.jornada && !data.ingreso && !data.salida) continue;
+    var ts = meta[key] || Date.now();
+    meta[key] = ts;
+    try{
+      syncDb.collection("users").doc(syncUid).collection("dias").doc(key)
+        .set({jornada:data.jornada, ingreso:data.ingreso, salida:data.salida, updatedAtMs:ts}, {merge:true})
+        .catch(function(){});
+    }catch(e){}
+  }
+  localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
+}
+
+function attachCloudListener(uid){
+  detachCloudListener();
+  syncUid = uid;
+  syncUnsub = syncDb.collection("users").doc(uid).collection("dias")
+    .onSnapshot(function(snapshot){
+      var changed = false;
+      var seen = {};
+      snapshot.forEach(function(doc){
+        seen[doc.id] = true;
+        if(mergeCloudDoc(doc.id, doc.data())) changed = true;
+      });
+      pushNeverSyncedLocalDates(seen);
+      if(changed) renderCalendar();
+    }, function(err){
+      setSyncStatus("Error de sincronización: "+err.message);
+    });
+}
+function detachCloudListener(){
+  if(syncUnsub){ syncUnsub(); syncUnsub = null; }
+  syncUid = null;
+}
+
+function initSync(){
+  var cfg = getSyncConfig();
+  if(!cfg){
+    setSyncStatus("Sin configurar. Tus datos se guardan solo en este dispositivo.");
+    return;
+  }
+  if(typeof firebase === "undefined"){
+    setSyncStatus("No se pudo cargar el servicio de sincronización (¿sin conexión?). Tus datos siguen guardándose en este dispositivo.");
+    return;
+  }
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    syncAuth = firebase.auth();
+    syncDb = firebase.firestore();
+    try{ syncDb.enablePersistence({synchronizeTabs:true}).catch(function(){}); }catch(e){}
+    syncConfigBlock.style.display = "none";
+    syncAuth.onAuthStateChanged(function(user){
+      if(user){
+        syncAuthBlock.style.display = "none";
+        syncLoggedBlock.style.display = "block";
+        syncLoggedEmail.textContent = "Conectada como "+user.email;
+        setSyncStatus("Sincronización activa.");
+        attachCloudListener(user.uid);
+      } else {
+        syncAuthBlock.style.display = "block";
+        syncLoggedBlock.style.display = "none";
+        setSyncStatus("Configuración guardada. Inicia sesión para sincronizar este dispositivo.");
+        detachCloudListener();
+      }
+    });
+  }catch(e){
+    setSyncStatus("Error al iniciar la sincronización: "+e.message);
+  }
+}
+
+/* ============ Máscara de hora HH:MM con teclado numérico ============ */
+function attachTimeMask(input){
+  input.addEventListener("input", function(){
+    var digits = input.value.replace(/[^0-9]/g,"").slice(0,4);
+    var v = digits;
+    if(digits.length >= 3){ v = digits.slice(0,2)+":"+digits.slice(2); }
+    input.value = v;
+  });
+}
+
+/* ============ Render ============ */
+var selMes = document.getElementById("selMes");
+var selAnio = document.getElementById("selAnio");
+var btnPrev = document.getElementById("btnPrev");
+var btnNext = document.getElementById("btnNext");
+var btnExport = document.getElementById("btnExport");
+var calendarGrid = document.getElementById("calendarGrid");
+var periodLabel = document.getElementById("periodLabel");
+var summaryBody = document.getElementById("summaryBody");
+var summaryFoot = document.getElementById("summaryFoot");
+
+var btnSync = document.getElementById("btnSync");
+var syncOverlay = document.getElementById("syncOverlay");
+var btnCloseSync = document.getElementById("btnCloseSync");
+var syncStatusEl = document.getElementById("syncStatus");
+var syncConfigBlock = document.getElementById("syncConfigBlock");
+var syncConfigInput = document.getElementById("syncConfigInput");
+var btnSaveSyncConfig = document.getElementById("btnSaveSyncConfig");
+var syncAuthBlock = document.getElementById("syncAuthBlock");
+var syncEmail = document.getElementById("syncEmail");
+var syncPassword = document.getElementById("syncPassword");
+var btnSyncSignup = document.getElementById("btnSyncSignup");
+var btnSyncLogin = document.getElementById("btnSyncLogin");
+var syncLoggedBlock = document.getElementById("syncLoggedBlock");
+var syncLoggedEmail = document.getElementById("syncLoggedEmail");
+var btnSyncLogout = document.getElementById("btnSyncLogout");
+var btnResetSyncConfig = document.getElementById("btnResetSyncConfig");
+
+var currentPeriodDays = [];
+
+function wireSyncUI(){
+  btnSync.addEventListener("click", function(){ syncOverlay.style.display = "flex"; });
+  btnCloseSync.addEventListener("click", function(){ syncOverlay.style.display = "none"; });
+  syncOverlay.addEventListener("click", function(e){ if(e.target === syncOverlay) syncOverlay.style.display = "none"; });
+
+  btnSaveSyncConfig.addEventListener("click", function(){
+    var cfg = parseFirebaseConfigSnippet(syncConfigInput.value);
+    if(!cfg){
+      setSyncStatus("No pude leer esa configuración. Pega el objeto firebaseConfig completo (con apiKey).");
+      return;
+    }
+    localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(cfg));
+    initSync();
+  });
+
+  btnSyncSignup.addEventListener("click", function(){
+    if(!syncAuth) return;
+    syncAuth.createUserWithEmailAndPassword(syncEmail.value, syncPassword.value)
+      .catch(function(e){ setSyncStatus("Error: "+e.message); });
+  });
+  btnSyncLogin.addEventListener("click", function(){
+    if(!syncAuth) return;
+    syncAuth.signInWithEmailAndPassword(syncEmail.value, syncPassword.value)
+      .catch(function(e){ setSyncStatus("Error: "+e.message); });
+  });
+  btnSyncLogout.addEventListener("click", function(){
+    if(syncAuth) syncAuth.signOut();
+  });
+  btnResetSyncConfig.addEventListener("click", function(){
+    if(syncAuth) syncAuth.signOut();
+    detachCloudListener();
+    localStorage.removeItem(SYNC_CONFIG_KEY);
+    syncConfigBlock.style.display = "block";
+    syncAuthBlock.style.display = "none";
+    syncLoggedBlock.style.display = "none";
+    syncConfigInput.value = "";
+    setSyncStatus("Sin configurar. Tus datos se guardan solo en este dispositivo.");
+  });
+}
+
+function populateSelectors(){
+  MESES.forEach(function(name, i){
+    var opt = document.createElement("option");
+    opt.value = String(i+1);
+    opt.textContent = name;
+    selMes.appendChild(opt);
+  });
+  ANIOS.forEach(function(y){
+    var opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    selAnio.appendChild(opt);
+  });
+}
+
+function setDefaultPeriod(){
+  var today = new Date();
+  var m = today.getMonth()+1, y = today.getFullYear();
+  if(today.getDate() > 10){
+    m += 1;
+    if(m > 12){ m = 1; y += 1; }
+  }
+  if(y < 2025){ y = 2025; m = 1; }
+  if(y > 2027){ y = 2027; m = 12; }
+  selMes.value = String(m);
+  selAnio.value = String(y);
+}
+
+function buildDayCell(date, inPeriod, isWeekStart){
+  var dateStr = toISODate(date);
+  var dow = date.getDay();
+  var isFestivo = !!FESTIVOS[dateStr];
+  var isDomingo = dow === 0;
+  var isSabado = dow === 6;
+
+  var cell = document.createElement("div");
+  var cls = "day-cell";
+  if(isWeekStart) cls += " week-start";
+  if(!inPeriod) cls += " outside";
+  else if(isFestivo) cls += " festivo";
+  else if(isDomingo) cls += " domingo";
+  else if(isSabado) cls += " sabado";
+  cell.className = cls;
+  cell.dataset.date = dateStr;
+
+  var head = document.createElement("div");
+  head.className = "day-head";
+  var numSpan = document.createElement("span");
+  numSpan.className = "day-num";
+  numSpan.textContent = String(date.getDate());
+  var dowSpan = document.createElement("span");
+  dowSpan.className = "day-dow";
+  dowSpan.textContent = DIAS_CORTO[(dow+6)%7];
+  head.appendChild(numSpan);
+  head.appendChild(dowSpan);
+  cell.appendChild(head);
+
+  if(inPeriod && isFestivo){
+    var fn = document.createElement("div");
+    fn.className = "day-festname";
+    fn.textContent = FESTIVOS[dateStr];
+    cell.appendChild(fn);
+  }
+
+  if(!inPeriod){ return cell; }
+
+  var data = getDayData(dateStr);
+
+  var select = document.createElement("select");
+  select.className = "jornada-select";
+  JORNADAS.forEach(function(j){
+    var opt = document.createElement("option");
+    opt.value = j;
+    opt.textContent = j === "" ? "— Jornada —" : j;
+    if(j === data.jornada) opt.selected = true;
+    select.appendChild(opt);
+  });
+  cell.appendChild(select);
+
+  var timeRow = document.createElement("div");
+  timeRow.className = "time-row";
+  var inIngreso = document.createElement("input");
+  inIngreso.type = "text";
+  inIngreso.inputMode = "numeric";
+  inIngreso.placeholder = "Ingreso";
+  inIngreso.maxLength = 5;
+  inIngreso.className = "time-input";
+  inIngreso.value = data.ingreso || "";
+  var inSalida = document.createElement("input");
+  inSalida.type = "text";
+  inSalida.inputMode = "numeric";
+  inSalida.placeholder = "Salida";
+  inSalida.maxLength = 5;
+  inSalida.className = "time-input";
+  inSalida.value = data.salida || "";
+  attachTimeMask(inIngreso);
+  attachTimeMask(inSalida);
+  timeRow.appendChild(inIngreso);
+  timeRow.appendChild(inSalida);
+  cell.appendChild(timeRow);
+
+  function persist(){
+    var jornada = select.value;
+    var ingreso = validTime(inIngreso.value) ? inIngreso.value : "";
+    var salida = validTime(inSalida.value) ? inSalida.value : "";
+    saveDayData(dateStr, jornada, ingreso, salida);
+    renderSummaryTable(currentPeriodDays);
+  }
+  select.addEventListener("change", persist);
+  inIngreso.addEventListener("change", persist);
+  inSalida.addEventListener("change", persist);
+
+  return cell;
+}
+
+function renderCalendar(){
+  var month = parseInt(selMes.value,10), year = parseInt(selAnio.value,10);
+  var period = getPeriod(month, year);
+  var periodStart = period.periodStart, periodEnd = period.periodEnd;
+  periodLabel.innerHTML = "Periodo: <b>"+fmtDate(periodStart)+"</b> &ndash; <b>"+fmtDate(periodEnd)+"</b>";
+
+  var gridStart = mondayOnOrBefore(periodStart);
+  var gridEnd = sundayOnOrAfter(periodEnd);
+
+  calendarGrid.innerHTML = "";
+  currentPeriodDays = [];
+
+  var cur = new Date(gridStart);
+  var idx = 0;
+  while(cur <= gridEnd){
+    var inPeriod = cur >= periodStart && cur <= periodEnd;
+    var cell = buildDayCell(new Date(cur), inPeriod, idx % 7 === 0);
+    calendarGrid.appendChild(cell);
+    if(inPeriod) currentPeriodDays.push(new Date(cur));
+    cur.setDate(cur.getDate()+1);
+    idx++;
+  }
+
+  renderSummaryTable(currentPeriodDays);
+}
+
+function renderSummaryTable(days){
+  summaryBody.innerHTML = "";
+  var totals = zeroCats();
+
+  days.forEach(function(date){
+    var dateStr = toISODate(date);
+    var data = getDayData(dateStr);
+    var dow = date.getDay();
+    var isFestivo = !!FESTIVOS[dateStr];
+    var isDomingo = dow === 0;
+    var isSabado = dow === 6;
+    var cats = calculateDay(data.jornada, data.ingreso, data.salida, isFestivo, isDomingo, isSabado);
+    var isNovedad = NOVEDADES.indexOf(data.jornada) !== -1;
+
+    var tr = document.createElement("tr");
+    if(isFestivo) tr.className = "row-festivo";
+    else if(isDomingo) tr.className = "row-domingo";
+    else if(isSabado) tr.className = "row-sabado";
+
+    var diaTd = document.createElement("td");
+    diaTd.className = "sticky-col";
+    var diaTxt = String(date.getDate()).padStart(2,"0")+"/"+String(date.getMonth()+1).padStart(2,"0")+" "+DIAS_CORTO[(dow+6)%7];
+    diaTd.textContent = diaTxt;
+    tr.appendChild(diaTd);
+
+    if(isNovedad){
+      var badgeTd = document.createElement("td");
+      badgeTd.className = "td-badge-row";
+      badgeTd.colSpan = CAT_ORDER.length;
+      var badgeTxt = data.jornada;
+      if(data.ingreso && data.salida) badgeTxt += " ("+data.ingreso+"-"+data.salida+")";
+      var badge = document.createElement("span");
+      badge.className = "badge-novedad";
+      badge.textContent = badgeTxt;
+      badgeTd.appendChild(badge);
+      tr.appendChild(badgeTd);
+    } else {
+      CAT_ORDER.forEach(function(k){
+        var td = document.createElement("td");
+        td.textContent = formatDecimal(cats[k]);
+        tr.appendChild(td);
+        totals[k] += cats[k];
+      });
+    }
+
+    summaryBody.appendChild(tr);
+  });
+
+  summaryFoot.innerHTML = "";
+  var trT = document.createElement("tr");
+  trT.className = "totals-row";
+  var tdLabel = document.createElement("td");
+  tdLabel.className = "sticky-col";
+  tdLabel.textContent = "Totales";
+  trT.appendChild(tdLabel);
+  CAT_ORDER.forEach(function(k){
+    var td = document.createElement("td");
+    td.textContent = formatDecimal(totals[k]);
+    trT.appendChild(td);
+  });
+  summaryFoot.appendChild(trT);
+}
+
+/* ============ Exportar CSV ============ */
+function csvEscape(v){
+  return '"'+String(v).replace(/"/g,'""')+'"';
+}
+function exportCSV(){
+  var month = parseInt(selMes.value,10), year = parseInt(selAnio.value,10);
+  var period = getPeriod(month, year);
+  var days = [];
+  var cur = new Date(period.periodStart);
+  while(cur <= period.periodEnd){
+    days.push(new Date(cur));
+    cur.setDate(cur.getDate()+1);
+  }
+
+  var headers = ["Día","Ext.Diurna","Ext.Nocturna","Rec.Nocturno","FC","FNC","DTDO","Ext.D.Fest","Ext.N.Fest","RD","DT"];
+  var rows = [headers];
+  var totals = zeroCats();
+
+  days.forEach(function(date){
+    var dateStr = toISODate(date);
+    var data = getDayData(dateStr);
+    var dow = date.getDay();
+    var isFestivo = !!FESTIVOS[dateStr];
+    var isDomingo = dow === 0;
+    var isSabado = dow === 6;
+    var cats = calculateDay(data.jornada, data.ingreso, data.salida, isFestivo, isDomingo, isSabado);
+    var isNovedad = NOVEDADES.indexOf(data.jornada) !== -1;
+
+    var diaLabel = fmtDate(date);
+    if(isNovedad){
+      diaLabel += " · "+data.jornada;
+      if(data.ingreso && data.salida) diaLabel += " ("+data.ingreso+"-"+data.salida+")";
+    }
+
+    var row;
+    if(isNovedad){
+      row = [diaLabel,"-","-","-","-","-","-","-","-","-","-"];
+    } else {
+      row = [diaLabel];
+      CAT_ORDER.forEach(function(k){
+        row.push(formatDecimal(cats[k]));
+        totals[k] += cats[k];
+      });
+    }
+    rows.push(row);
+  });
+
+  var totalsRow = ["Totales"];
+  CAT_ORDER.forEach(function(k){ totalsRow.push(formatDecimal(totals[k])); });
+  rows.push(totalsRow);
+
+  var csv = "﻿" + rows.map(function(r){ return r.map(csvEscape).join(";"); }).join("\r\n");
+  var blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "resumen_horas_"+year+"-"+String(month).padStart(2,"0")+".csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+/* ============ Navegación de periodo ============ */
+function shiftPeriod(delta){
+  var m = parseInt(selMes.value,10) + delta;
+  var y = parseInt(selAnio.value,10);
+  if(m < 1){ m = 12; y -= 1; }
+  if(m > 12){ m = 1; y += 1; }
+  if(y < 2025 || y > 2027) return;
+  selMes.value = String(m);
+  selAnio.value = String(y);
+  renderCalendar();
+}
+
+/* ============ Init ============ */
+function init(){
+  populateSelectors();
+  setDefaultPeriod();
+  selMes.addEventListener("change", renderCalendar);
+  selAnio.addEventListener("change", renderCalendar);
+  btnPrev.addEventListener("click", function(){ shiftPeriod(-1); });
+  btnNext.addEventListener("click", function(){ shiftPeriod(1); });
+  btnExport.addEventListener("click", exportCSV);
+  wireSyncUI();
+  renderCalendar();
+  initSync();
+}
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
