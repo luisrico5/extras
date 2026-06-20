@@ -291,11 +291,11 @@ td.td-novedad{white-space:normal;text-align:left;max-width:240px;}
 /* ---------- Impresión (PDF) ---------- */
 .print-area{display:none;}
 @media print{
-  body *{visibility:hidden;}
-  .print-area, .print-area *{visibility:visible;}
+  html, body{background:#fff !important;}
+  body > *{display:none !important;}
+  body > #printArea{display:block !important;}
   .print-area{
-    display:block;position:absolute;left:0;top:0;width:100%;
-    background:#fff;color:#000;padding:12px;
+    color:#000;padding:12px;
     -webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;
   }
   .print-area h1{font-size:15px;margin:0 0 10px;text-align:center;}
@@ -1135,7 +1135,10 @@ function renderSummaryTable(days){
     var isDomingo = dow === 0;
     var isSabado = dow === 6;
     var cats = calculateDay(data.jornada, data.ingreso, data.salida, isFestivo, isDomingo, isSabado);
+    var hasHorario = validTime(data.ingreso) && validTime(data.salida);
     var isNovedad = NOVEDADES.indexOf(data.jornada) !== -1;
+    var isDescanso = data.jornada === "Descanso";
+    var isBadgeRow = isNovedad || (isDescanso && !hasHorario);
 
     var tr = document.createElement("tr");
     if(isFestivo) tr.className = "row-festivo";
@@ -1148,12 +1151,12 @@ function renderSummaryTable(days){
     diaTd.textContent = diaTxt;
     tr.appendChild(diaTd);
 
-    if(isNovedad){
+    if(isBadgeRow){
       var badgeTd = document.createElement("td");
       badgeTd.className = "td-badge-row";
       badgeTd.colSpan = CAT_ORDER.length;
       var badgeTxt = data.jornada;
-      if(data.ingreso && data.salida) badgeTxt += " ("+data.ingreso+"-"+data.salida+")";
+      if(hasHorario) badgeTxt += " ("+data.ingreso+"-"+data.salida+")";
       var badge = document.createElement("span");
       badge.className = "badge-novedad";
       badge.textContent = badgeTxt;
@@ -1170,7 +1173,10 @@ function renderSummaryTable(days){
 
     var novedadTd = document.createElement("td");
     novedadTd.className = "td-novedad";
-    novedadTd.textContent = data.novedad ? data.novedad : "-";
+    var notaParts = [];
+    if(isDescanso && hasHorario) notaParts.push("Descanso trabajado");
+    if(data.novedad) notaParts.push(data.novedad);
+    novedadTd.textContent = notaParts.length ? notaParts.join(" — ") : "-";
     tr.appendChild(novedadTd);
 
     summaryBody.appendChild(tr);
@@ -1220,16 +1226,19 @@ function exportCSV(){
     var isDomingo = dow === 0;
     var isSabado = dow === 6;
     var cats = calculateDay(data.jornada, data.ingreso, data.salida, isFestivo, isDomingo, isSabado);
+    var hasHorario = validTime(data.ingreso) && validTime(data.salida);
     var isNovedad = NOVEDADES.indexOf(data.jornada) !== -1;
+    var isDescanso = data.jornada === "Descanso";
+    var isBadgeRow = isNovedad || (isDescanso && !hasHorario);
 
     var diaLabel = fmtDate(date);
-    if(isNovedad){
+    if(isBadgeRow){
       diaLabel += " · "+data.jornada;
-      if(data.ingreso && data.salida) diaLabel += " ("+data.ingreso+"-"+data.salida+")";
+      if(hasHorario) diaLabel += " ("+data.ingreso+"-"+data.salida+")";
     }
 
     var row;
-    if(isNovedad){
+    if(isBadgeRow){
       row = [diaLabel,"-","-","-","-","-","-","-","-","-","-"];
     } else {
       row = [diaLabel];
@@ -1238,7 +1247,10 @@ function exportCSV(){
         totals[k] += cats[k];
       });
     }
-    row.push(data.novedad ? data.novedad : "-");
+    var notaParts = [];
+    if(isDescanso && hasHorario) notaParts.push("Descanso trabajado");
+    if(data.novedad) notaParts.push(data.novedad);
+    row.push(notaParts.length ? notaParts.join(" — ") : "-");
     rows.push(row);
   });
 
@@ -1297,7 +1309,7 @@ function exportPDF(){
       var ingreso = hasHorario ? data.ingreso : "-";
       var salida = hasHorario ? data.salida : "-";
       var notaParts = [];
-      if(isDescanso) notaParts.push("Descanso");
+      if(isDescanso) notaParts.push("Descanso trabajado");
       if(data.novedad) notaParts.push(data.novedad);
       var nota = notaParts.length ? notaParts.join(" — ") : "-";
       html += "<tr"+(rowClass?" class=\""+rowClass+"\"":"")+"><td>"+escapeHtml(fmtDate(date))+"</td><td>"+escapeHtml(ingreso)+"</td><td>"+escapeHtml(salida)+"</td><td>"+escapeHtml(nota)+"</td></tr>";
