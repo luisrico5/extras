@@ -989,7 +989,13 @@ function wireExportUI(){
   btnExportPDF.addEventListener("click", function(){
     exportMenu.style.display = "none";
     showPdfLoading();
-    setTimeout(function(){ exportPDF(); }, 30);
+    // Doble rAF: garantiza que el navegador pinte el overlay antes de
+    // arrancar el trabajo pesado (window.print() congela la pestaña en iOS).
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        exportPDF();
+      });
+    });
   });
 }
 
