@@ -725,8 +725,8 @@ function onLocalDayChanged(dateStr, jornada, ingreso, salida, novedad){
     try{
       syncDb.collection("users").doc(syncUid).collection("dias").doc(dateStr)
         .set({jornada:jornada, ingreso:ingreso, salida:salida, novedad:novedad||"", updatedAtMs:ts}, {merge:true})
-        .catch(function(){});
-    }catch(e){}
+        .catch(function(err){ setSyncStatus("Error guardando en la nube: "+err.message); });
+    }catch(e){ setSyncStatus("Error guardando en la nube: "+e.message); }
   }
 }
 
@@ -756,8 +756,8 @@ function pushNeverSyncedLocalDates(seen){
     try{
       syncDb.collection("users").doc(syncUid).collection("dias").doc(key)
         .set({jornada:data.jornada, ingreso:data.ingreso, salida:data.salida, novedad:data.novedad||"", updatedAtMs:ts}, {merge:true})
-        .catch(function(){});
-    }catch(e){}
+        .catch(function(err){ setSyncStatus("Error guardando en la nube: "+err.message); });
+    }catch(e){ setSyncStatus("Error guardando en la nube: "+e.message); }
   }
   localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
 }
