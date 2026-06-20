@@ -288,6 +288,25 @@ tfoot td{border-top:2px solid var(--primary);border-bottom:none;background:var(-
 td.td-badge-row{padding:7px 10px;}
 td.td-novedad{white-space:normal;text-align:left;max-width:240px;}
 
+/* ---------- Overlay de carga (exportar PDF) ---------- */
+.pdf-loading-overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,.65);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;z-index:60;
+}
+.pdf-loading-bar-track{
+  width:180px;height:6px;border-radius:4px;background:rgba(255,255,255,.15);overflow:hidden;
+}
+.pdf-loading-bar-fill{
+  height:100%;width:40%;border-radius:4px;background:var(--primary);
+  animation:pdfLoadingMove 1.1s ease-in-out infinite;
+}
+@keyframes pdfLoadingMove{
+  0%{transform:translateX(-100%);}
+  100%{transform:translateX(250%);}
+}
+.pdf-loading-text{color:var(--text);font-size:13px;font-weight:600;}
+
 /* ---------- Impresión (PDF) ---------- */
 .print-area{display:none;}
 @media print{
@@ -463,6 +482,11 @@ td.td-novedad{white-space:normal;text-align:left;max-width:240px;}
       <button class="btn-sync-action" id="btnClearNovedad" type="button" style="background:var(--surface-2);color:var(--text);">Borrar</button>
     </div>
   </div>
+</div>
+
+<div class="pdf-loading-overlay" id="pdfLoadingOverlay" style="display:none;">
+  <div class="pdf-loading-bar-track"><div class="pdf-loading-bar-fill"></div></div>
+  <div class="pdf-loading-text">Generando PDF…</div>
 </div>
 
 <div id="printArea" class="print-area"></div>
@@ -840,6 +864,9 @@ var exportMenu = document.getElementById("exportMenu");
 var btnExportCSV = document.getElementById("btnExportCSV");
 var btnExportPDF = document.getElementById("btnExportPDF");
 var printArea = document.getElementById("printArea");
+var pdfLoadingOverlay = document.getElementById("pdfLoadingOverlay");
+function showPdfLoading(){ pdfLoadingOverlay.style.display = "flex"; }
+function hidePdfLoading(){ pdfLoadingOverlay.style.display = "none"; }
 var calendarGrid = document.getElementById("calendarGrid");
 var periodLabel = document.getElementById("periodLabel");
 var summaryBody = document.getElementById("summaryBody");
@@ -959,7 +986,11 @@ function wireExportUI(){
     }
   });
   btnExportCSV.addEventListener("click", function(){ exportMenu.style.display = "none"; exportCSV(); });
-  btnExportPDF.addEventListener("click", function(){ exportMenu.style.display = "none"; exportPDF(); });
+  btnExportPDF.addEventListener("click", function(){
+    exportMenu.style.display = "none";
+    showPdfLoading();
+    setTimeout(function(){ exportPDF(); }, 30);
+  });
 }
 
 function populateSelectors(){
@@ -1318,6 +1349,17 @@ function exportPDF(){
 
   html += "</tbody></table>";
   printArea.innerHTML = html;
+
+  var loadingDone = false;
+  function finishPdfLoading(){
+    if(loadingDone) return;
+    loadingDone = true;
+    hidePdfLoading();
+    window.removeEventListener("afterprint", finishPdfLoading);
+  }
+  window.addEventListener("afterprint", finishPdfLoading);
+  setTimeout(finishPdfLoading, 15000);
+
   window.print();
 }
 
