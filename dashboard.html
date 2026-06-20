@@ -70,6 +70,7 @@ body{
   cursor:pointer;
 }
 .nav-btn:hover{background:var(--primary);}
+.export-wrap{position:relative;margin-left:auto;}
 .btn-export{
   background:var(--secondary);
   color:#1a1305;
@@ -79,9 +80,19 @@ body{
   font-size:13px;
   font-weight:600;
   cursor:pointer;
-  margin-left:auto;
 }
 .btn-export:hover{filter:brightness(1.08);}
+.export-menu{
+  position:absolute;right:0;top:calc(100% + 6px);
+  background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+  padding:6px;display:flex;flex-direction:column;gap:4px;min-width:170px;z-index:40;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+.export-menu button{
+  background:none;border:none;color:var(--text);text-align:left;
+  padding:8px 10px;border-radius:6px;font-size:13px;cursor:pointer;
+}
+.export-menu button:hover{background:var(--primary);color:#fff;}
 .btn-sync{
   background:var(--primary);
   color:#fff;
@@ -183,6 +194,22 @@ body{
   justify-content:space-between;
 }
 .day-num{font-size:15px;font-weight:700;}
+.day-num-group{display:flex;align-items:center;gap:5px;}
+.btn-novedad-day{
+  width:18px;height:18px;
+  border-radius:5px;
+  border:1px solid var(--border);
+  background:rgba(15,23,42,.4);
+  color:var(--text-secondary);
+  font-size:13px;
+  font-weight:700;
+  line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  padding:0;
+}
+.btn-novedad-day:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+.btn-novedad-day.has-novedad{background:var(--secondary);color:#1a1305;border-color:var(--secondary);}
 .day-dow{font-size:11px;color:var(--text-secondary);text-transform:uppercase;}
 .day-cell.festivo .day-dow,.day-cell.domingo .day-dow,.day-cell.sabado .day-dow{color:rgba(241,245,249,.75);}
 .day-festname{font-size:10px;color:var(--text-secondary);margin-top:-4px;}
@@ -259,6 +286,22 @@ tfoot td{border-top:2px solid var(--primary);border-bottom:none;background:var(-
   box-shadow:0 1px 2px rgba(0,0,0,.25);
 }
 td.td-badge-row{padding:7px 10px;}
+td.td-novedad{white-space:normal;text-align:left;max-width:240px;}
+
+/* ---------- Impresión (PDF) ---------- */
+.print-area{display:none;}
+@media print{
+  body *{visibility:hidden;}
+  .print-area, .print-area *{visibility:visible;}
+  .print-area{
+    display:block;position:absolute;left:0;top:0;width:100%;
+    background:#fff;color:#000;padding:12px;
+  }
+  .print-area h1{font-size:15px;margin:0 0 10px;text-align:center;}
+  .print-table{width:100%;border-collapse:collapse;font-size:11px;}
+  .print-table th,.print-table td{border:1px solid #333;padding:4px 6px;text-align:left;}
+  .print-table th{background:#eee;}
+}
 
 /* ---------- Legend ---------- */
 .legend{
@@ -291,13 +334,19 @@ td.td-badge-row{padding:7px 10px;}
 <div class="app">
 
   <header class="topbar">
-    <h1>Horas Extras y Recargos · Colombia</h1>
+    <h1 id="pageTitle">HORAS EXTRAS Y RECARGOS - LUIS RICO</h1>
     <div class="controls">
       <button class="nav-btn" id="btnPrev" type="button" aria-label="Periodo anterior">‹</button>
       <select id="selMes" aria-label="Mes"></select>
       <select id="selAnio" aria-label="Año"></select>
       <button class="nav-btn" id="btnNext" type="button" aria-label="Periodo siguiente">›</button>
-      <button class="btn-export" id="btnExport" type="button">Exportar periodo</button>
+      <div class="export-wrap" id="exportWrap">
+        <button class="btn-export" id="btnExport" type="button">Exportar tiempo</button>
+        <div class="export-menu" id="exportMenu" style="display:none;">
+          <button type="button" id="btnExportCSV">Exportar CSV</button>
+          <button type="button" id="btnExportPDF">Exportar PDF</button>
+        </div>
+      </div>
       <button class="btn-sync" id="btnSync" type="button">Sincronización</button>
     </div>
     <div class="period-label" id="periodLabel"></div>
@@ -328,6 +377,7 @@ td.td-badge-row{padding:7px 10px;}
               <th>Ext.N.Fest</th>
               <th>RD</th>
               <th>DT</th>
+              <th>Novedad</th>
             </tr>
           </thead>
           <tbody id="summaryBody"></tbody>
@@ -391,6 +441,23 @@ td.td-badge-row{padding:7px 10px;}
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="novedadOverlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2 id="novedadModalTitle">Novedad</h2>
+      <button class="modal-close" id="btnCloseNovedad" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <label class="sync-label">Escribe la novedad para este día:</label>
+    <textarea id="novedadInput" class="sync-textarea" rows="4" placeholder="Ej: Llegó tarde por cita médica"></textarea>
+    <div class="sync-btn-row">
+      <button class="btn-sync-action" id="btnSaveNovedad" type="button">Guardar</button>
+      <button class="btn-sync-action" id="btnClearNovedad" type="button" style="background:var(--surface-2);color:var(--text);">Borrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="printArea" class="print-area"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -516,6 +583,9 @@ function nightOverlap(s,e){
   }
   return total;
 }
+function escapeHtml(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
 
 /* ============ Motor de cálculo ============ */
 function zeroCats(){
@@ -586,24 +656,24 @@ function calculateDay(jornada, ingreso, salida, isFestivo, isDomingo, isSabado){
 /* ============ Persistencia (localStorage clave=fecha YYYY-MM-DD) ============ */
 function getDayData(dateStr){
   var raw = localStorage.getItem(dateStr);
-  if(!raw) return {jornada:"", ingreso:"", salida:""};
+  if(!raw) return {jornada:"", ingreso:"", salida:"", novedad:""};
   try{
     var obj = JSON.parse(raw);
-    return {jornada:obj.jornada||"", ingreso:obj.ingreso||"", salida:obj.salida||""};
+    return {jornada:obj.jornada||"", ingreso:obj.ingreso||"", salida:obj.salida||"", novedad:obj.novedad||""};
   }catch(e){
-    return {jornada:"", ingreso:"", salida:""};
+    return {jornada:"", ingreso:"", salida:"", novedad:""};
   }
 }
-function writeLocalDayData(dateStr, jornada, ingreso, salida){
-  if(!jornada && !ingreso && !salida){
+function writeLocalDayData(dateStr, jornada, ingreso, salida, novedad){
+  if(!jornada && !ingreso && !salida && !novedad){
     localStorage.removeItem(dateStr);
   } else {
-    localStorage.setItem(dateStr, JSON.stringify({jornada:jornada, ingreso:ingreso, salida:salida}));
+    localStorage.setItem(dateStr, JSON.stringify({jornada:jornada, ingreso:ingreso, salida:salida, novedad:novedad||""}));
   }
 }
-function saveDayData(dateStr, jornada, ingreso, salida){
-  writeLocalDayData(dateStr, jornada, ingreso, salida);
-  onLocalDayChanged(dateStr, jornada, ingreso, salida);
+function saveDayData(dateStr, jornada, ingreso, salida, novedad){
+  writeLocalDayData(dateStr, jornada, ingreso, salida, novedad);
+  onLocalDayChanged(dateStr, jornada, ingreso, salida, novedad);
 }
 
 /* ============ Sincronización en la nube (Firebase, opcional) ============
@@ -638,7 +708,7 @@ function setSyncStatus(msg){
   if(syncStatusEl) syncStatusEl.textContent = msg;
 }
 
-function onLocalDayChanged(dateStr, jornada, ingreso, salida){
+function onLocalDayChanged(dateStr, jornada, ingreso, salida, novedad){
   var ts = Date.now();
   var meta = getSyncMeta();
   meta[dateStr] = ts;
@@ -646,7 +716,7 @@ function onLocalDayChanged(dateStr, jornada, ingreso, salida){
   if(syncDb && syncUid){
     try{
       syncDb.collection("users").doc(syncUid).collection("dias").doc(dateStr)
-        .set({jornada:jornada, ingreso:ingreso, salida:salida, updatedAtMs:ts}, {merge:true})
+        .set({jornada:jornada, ingreso:ingreso, salida:salida, novedad:novedad||"", updatedAtMs:ts}, {merge:true})
         .catch(function(){});
     }catch(e){}
   }
@@ -657,7 +727,7 @@ function mergeCloudDoc(dateStr, remote){
   var localTs = meta[dateStr] || 0;
   var remoteTs = remote.updatedAtMs || 0;
   if(remoteTs > localTs){
-    writeLocalDayData(dateStr, remote.jornada||"", remote.ingreso||"", remote.salida||"");
+    writeLocalDayData(dateStr, remote.jornada||"", remote.ingreso||"", remote.salida||"", remote.novedad||"");
     meta[dateStr] = remoteTs;
     localStorage.setItem(SYNC_META_KEY, JSON.stringify(meta));
     return true;
@@ -672,12 +742,12 @@ function pushNeverSyncedLocalDates(seen){
     var key = localStorage.key(i);
     if(!DATE_KEY_RE.test(key) || seen[key]) continue;
     var data = getDayData(key);
-    if(!data.jornada && !data.ingreso && !data.salida) continue;
+    if(!data.jornada && !data.ingreso && !data.salida && !data.novedad) continue;
     var ts = meta[key] || Date.now();
     meta[key] = ts;
     try{
       syncDb.collection("users").doc(syncUid).collection("dias").doc(key)
-        .set({jornada:data.jornada, ingreso:data.ingreso, salida:data.salida, updatedAtMs:ts}, {merge:true})
+        .set({jornada:data.jornada, ingreso:data.ingreso, salida:data.salida, novedad:data.novedad||"", updatedAtMs:ts}, {merge:true})
         .catch(function(){});
     }catch(e){}
   }
@@ -752,15 +822,28 @@ function attachTimeMask(input){
 }
 
 /* ============ Render ============ */
+var pageTitleEl = document.getElementById("pageTitle");
 var selMes = document.getElementById("selMes");
 var selAnio = document.getElementById("selAnio");
 var btnPrev = document.getElementById("btnPrev");
 var btnNext = document.getElementById("btnNext");
 var btnExport = document.getElementById("btnExport");
+var exportMenu = document.getElementById("exportMenu");
+var btnExportCSV = document.getElementById("btnExportCSV");
+var btnExportPDF = document.getElementById("btnExportPDF");
+var printArea = document.getElementById("printArea");
 var calendarGrid = document.getElementById("calendarGrid");
 var periodLabel = document.getElementById("periodLabel");
 var summaryBody = document.getElementById("summaryBody");
 var summaryFoot = document.getElementById("summaryFoot");
+
+var novedadOverlay = document.getElementById("novedadOverlay");
+var btnCloseNovedad = document.getElementById("btnCloseNovedad");
+var novedadModalTitle = document.getElementById("novedadModalTitle");
+var novedadInput = document.getElementById("novedadInput");
+var btnSaveNovedad = document.getElementById("btnSaveNovedad");
+var btnClearNovedad = document.getElementById("btnClearNovedad");
+var novedadCurrentDate = null;
 
 var btnSync = document.getElementById("btnSync");
 var syncOverlay = document.getElementById("syncOverlay");
@@ -821,6 +904,56 @@ function wireSyncUI(){
   });
 }
 
+/* ============ Modal de Novedad por día ============ */
+function openNovedadModal(dateStr, displayLabel){
+  novedadCurrentDate = dateStr;
+  var data = getDayData(dateStr);
+  novedadModalTitle.textContent = "Novedad · "+displayLabel;
+  novedadInput.value = data.novedad || "";
+  novedadOverlay.style.display = "flex";
+  novedadInput.focus();
+}
+function closeNovedadModal(){
+  novedadOverlay.style.display = "none";
+  novedadCurrentDate = null;
+}
+function commitNovedad(dateStr, text){
+  var existing = getDayData(dateStr);
+  saveDayData(dateStr, existing.jornada, existing.ingreso, existing.salida, text);
+  var btn = calendarGrid.querySelector('.btn-novedad-day[data-date="'+dateStr+'"]');
+  if(btn) btn.classList.toggle("has-novedad", !!text);
+  renderSummaryTable(currentPeriodDays);
+}
+function wireNovedadUI(){
+  btnCloseNovedad.addEventListener("click", closeNovedadModal);
+  novedadOverlay.addEventListener("click", function(e){ if(e.target === novedadOverlay) closeNovedadModal(); });
+  btnSaveNovedad.addEventListener("click", function(){
+    if(!novedadCurrentDate) return;
+    commitNovedad(novedadCurrentDate, novedadInput.value.trim());
+    closeNovedadModal();
+  });
+  btnClearNovedad.addEventListener("click", function(){
+    if(!novedadCurrentDate) return;
+    commitNovedad(novedadCurrentDate, "");
+    closeNovedadModal();
+  });
+}
+
+/* ============ Menú de exportación ============ */
+function wireExportUI(){
+  btnExport.addEventListener("click", function(e){
+    e.stopPropagation();
+    exportMenu.style.display = exportMenu.style.display === "flex" ? "none" : "flex";
+  });
+  document.addEventListener("click", function(e){
+    if(exportMenu.style.display === "flex" && !exportMenu.contains(e.target) && e.target !== btnExport){
+      exportMenu.style.display = "none";
+    }
+  });
+  btnExportCSV.addEventListener("click", function(){ exportMenu.style.display = "none"; exportCSV(); });
+  btnExportPDF.addEventListener("click", function(){ exportMenu.style.display = "none"; exportPDF(); });
+}
+
 function populateSelectors(){
   MESES.forEach(function(name, i){
     var opt = document.createElement("option");
@@ -855,6 +988,7 @@ function buildDayCell(date, inPeriod, isWeekStart){
   var isFestivo = !!FESTIVOS[dateStr];
   var isDomingo = dow === 0;
   var isSabado = dow === 6;
+  var data = inPeriod ? getDayData(dateStr) : null;
 
   var cell = document.createElement("div");
   var cls = "day-cell";
@@ -868,13 +1002,32 @@ function buildDayCell(date, inPeriod, isWeekStart){
 
   var head = document.createElement("div");
   head.className = "day-head";
+  var leftGroup = document.createElement("div");
+  leftGroup.className = "day-num-group";
   var numSpan = document.createElement("span");
   numSpan.className = "day-num";
   numSpan.textContent = String(date.getDate());
+  leftGroup.appendChild(numSpan);
+
+  if(inPeriod){
+    var btnNovedad = document.createElement("button");
+    btnNovedad.type = "button";
+    btnNovedad.className = "btn-novedad-day"+(data.novedad ? " has-novedad" : "");
+    btnNovedad.dataset.date = dateStr;
+    btnNovedad.title = "Novedad del día";
+    btnNovedad.setAttribute("aria-label","Agregar novedad");
+    btnNovedad.textContent = "+";
+    btnNovedad.addEventListener("click", function(e){
+      e.stopPropagation();
+      openNovedadModal(dateStr, fmtDate(date));
+    });
+    leftGroup.appendChild(btnNovedad);
+  }
+
   var dowSpan = document.createElement("span");
   dowSpan.className = "day-dow";
   dowSpan.textContent = DIAS_CORTO[(dow+6)%7];
-  head.appendChild(numSpan);
+  head.appendChild(leftGroup);
   head.appendChild(dowSpan);
   cell.appendChild(head);
 
@@ -886,8 +1039,6 @@ function buildDayCell(date, inPeriod, isWeekStart){
   }
 
   if(!inPeriod){ return cell; }
-
-  var data = getDayData(dateStr);
 
   var select = document.createElement("select");
   select.className = "jornada-select";
@@ -926,7 +1077,8 @@ function buildDayCell(date, inPeriod, isWeekStart){
     var jornada = select.value;
     var ingreso = validTime(inIngreso.value) ? inIngreso.value : "";
     var salida = validTime(inSalida.value) ? inSalida.value : "";
-    saveDayData(dateStr, jornada, ingreso, salida);
+    var existing = getDayData(dateStr);
+    saveDayData(dateStr, jornada, ingreso, salida, existing.novedad);
     renderSummaryTable(currentPeriodDays);
   }
   select.addEventListener("change", persist);
@@ -940,6 +1092,7 @@ function renderCalendar(){
   var month = parseInt(selMes.value,10), year = parseInt(selAnio.value,10);
   var period = getPeriod(month, year);
   var periodStart = period.periodStart, periodEnd = period.periodEnd;
+  pageTitleEl.textContent = "HORAS EXTRAS Y RECARGOS - LUIS RICO — "+MESES[month-1].toUpperCase()+" "+year;
   periodLabel.innerHTML = "Periodo: <b>"+fmtDate(periodStart)+"</b> &ndash; <b>"+fmtDate(periodEnd)+"</b>";
 
   var gridStart = mondayOnOrBefore(periodStart);
@@ -1007,6 +1160,11 @@ function renderSummaryTable(days){
       });
     }
 
+    var novedadTd = document.createElement("td");
+    novedadTd.className = "td-novedad";
+    novedadTd.textContent = data.novedad ? data.novedad : "-";
+    tr.appendChild(novedadTd);
+
     summaryBody.appendChild(tr);
   });
 
@@ -1022,6 +1180,9 @@ function renderSummaryTable(days){
     td.textContent = formatDecimal(totals[k]);
     trT.appendChild(td);
   });
+  var tdNovedadTotal = document.createElement("td");
+  tdNovedadTotal.textContent = "-";
+  trT.appendChild(tdNovedadTotal);
   summaryFoot.appendChild(trT);
 }
 
@@ -1039,7 +1200,7 @@ function exportCSV(){
     cur.setDate(cur.getDate()+1);
   }
 
-  var headers = ["Día","Ext.Diurna","Ext.Nocturna","Rec.Nocturno","FC","FNC","DTDO","Ext.D.Fest","Ext.N.Fest","RD","DT"];
+  var headers = ["Día","Ext.Diurna","Ext.Nocturna","Rec.Nocturno","FC","FNC","DTDO","Ext.D.Fest","Ext.N.Fest","RD","DT","Novedad"];
   var rows = [headers];
   var totals = zeroCats();
 
@@ -1069,11 +1230,13 @@ function exportCSV(){
         totals[k] += cats[k];
       });
     }
+    row.push(data.novedad ? data.novedad : "-");
     rows.push(row);
   });
 
   var totalsRow = ["Totales"];
   CAT_ORDER.forEach(function(k){ totalsRow.push(formatDecimal(totals[k])); });
+  totalsRow.push("-");
   rows.push(totalsRow);
 
   var csv = "﻿" + rows.map(function(r){ return r.map(csvEscape).join(";"); }).join("\r\n");
@@ -1086,6 +1249,38 @@ function exportCSV(){
   a.click();
   document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+/* ============ Exportar PDF (vía diálogo de impresión del navegador) ============ */
+function exportPDF(){
+  var month = parseInt(selMes.value,10), year = parseInt(selAnio.value,10);
+  var period = getPeriod(month, year);
+  var days = [];
+  var cur = new Date(period.periodStart);
+  while(cur <= period.periodEnd){
+    days.push(new Date(cur));
+    cur.setDate(cur.getDate()+1);
+  }
+
+  var titulo = "HORAS EXTRAS Y RECARGOS - LUIS RICO — "+MESES[month-1].toUpperCase()+" "+year;
+  var html = "<h1>"+escapeHtml(titulo)+"</h1>";
+  html += "<table class=\"print-table\"><thead><tr><th>Fecha</th><th>Hora Ingreso</th><th>Hora Salida</th><th>Novedad</th></tr></thead><tbody>";
+
+  days.forEach(function(date){
+    var dateStr = toISODate(date);
+    var data = getDayData(dateStr);
+    var ingreso = validTime(data.ingreso) ? data.ingreso : "-";
+    var salida = validTime(data.salida) ? data.salida : "-";
+    var notaParts = [];
+    if(NOVEDADES.indexOf(data.jornada) !== -1) notaParts.push(data.jornada);
+    if(data.novedad) notaParts.push(data.novedad);
+    var nota = notaParts.length ? notaParts.join(" — ") : "-";
+    html += "<tr><td>"+escapeHtml(fmtDate(date))+"</td><td>"+escapeHtml(ingreso)+"</td><td>"+escapeHtml(salida)+"</td><td>"+escapeHtml(nota)+"</td></tr>";
+  });
+
+  html += "</tbody></table>";
+  printArea.innerHTML = html;
+  window.print();
 }
 
 /* ============ Navegación de periodo ============ */
@@ -1108,8 +1303,9 @@ function init(){
   selAnio.addEventListener("change", renderCalendar);
   btnPrev.addEventListener("click", function(){ shiftPeriod(-1); });
   btnNext.addEventListener("click", function(){ shiftPeriod(1); });
-  btnExport.addEventListener("click", exportCSV);
+  wireExportUI();
   wireSyncUI();
+  wireNovedadUI();
   renderCalendar();
   initSync();
 }
