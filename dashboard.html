@@ -1356,15 +1356,24 @@ function exportPDF(){
   html += "</tbody></table>";
   printArea.innerHTML = html;
 
+  // En iOS, "afterprint" suele disparar casi de inmediato al llamar a
+  // print() (no espera a que la hoja de exportar/imprimir sea visible),
+  // por eso el aviso desaparecía antes de tiempo. Para evitar ese hueco
+  // en blanco, se exige un tiempo mínimo de aviso visible antes de
+  // ocultarlo, sin importar qué evento dispare primero.
   var loadingDone = false;
+  var pdfLoadingStart = Date.now();
+  var MIN_PDF_LOADING_MS = 1000;
   function finishPdfLoading(){
     if(loadingDone) return;
     loadingDone = true;
-    hidePdfLoading();
     window.removeEventListener("afterprint", finishPdfLoading);
+    var elapsed = Date.now() - pdfLoadingStart;
+    var wait = Math.max(0, MIN_PDF_LOADING_MS - elapsed);
+    setTimeout(hidePdfLoading, wait);
   }
   window.addEventListener("afterprint", finishPdfLoading);
-  setTimeout(finishPdfLoading, 15000);
+  setTimeout(finishPdfLoading, 8000);
 
   window.print();
 }
