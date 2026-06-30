@@ -645,11 +645,12 @@ function calculateDay(jornada, ingreso, salida, isFestivo, isDomingo, isSabado){
   var threshold = restRegime ? 8 : (isOrdinaria ? 8.5 : 8);
   var thresholdMin = threshold*60;
 
-  var isTurnoNoche = jornada === "Turno noche (23-07)";
+  var ANCHOR_HOUR = {"Turno noche (23-07)":23, "Turno tarde (15-23)":15};
+  var anchorHour = ANCHOR_HOUR[jornada];
   var ordinaryDur, extraDayMin, extraNightMin, rnMin;
 
-  if(isTurnoNoche){
-    var anchorStart = 23*60;
+  if(anchorHour !== undefined){
+    var anchorStart = anchorHour*60;
     var anchorEnd = anchorStart+thresholdMin;
     var ordStart = Math.max(startMin, anchorStart);
     var ordEnd = Math.min(endMin, anchorEnd);
