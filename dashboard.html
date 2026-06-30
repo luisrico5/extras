@@ -645,14 +645,31 @@ function calculateDay(jornada, ingreso, salida, isFestivo, isDomingo, isSabado){
   var threshold = restRegime ? 8 : (isOrdinaria ? 8.5 : 8);
   var thresholdMin = threshold*60;
 
-  var ordinaryEnd = Math.min(endMin, startMin+thresholdMin);
-  var ordinaryDur = Math.max(0, ordinaryEnd-startMin);
-  var extraStart = ordinaryEnd;
-  var extraDur = Math.max(0, endMin-extraStart);
+  var isTurnoNoche = jornada === "Turno noche (23-07)";
+  var ordinaryDur, extraDayMin, extraNightMin, rnMin;
 
-  var rnMin = nightOverlap(startMin, ordinaryEnd);
-  var extraNightMin = nightOverlap(extraStart, endMin);
-  var extraDayMin = Math.max(0, extraDur-extraNightMin);
+  if(isTurnoNoche){
+    var anchorStart = 23*60;
+    var anchorEnd = anchorStart+thresholdMin;
+    var ordStart = Math.max(startMin, anchorStart);
+    var ordEnd = Math.min(endMin, anchorEnd);
+    ordinaryDur = Math.max(0, ordEnd-ordStart);
+    rnMin = nightOverlap(ordStart, ordEnd);
+    var preExtraMin = Math.max(0, anchorStart-startMin);
+    var postExtraMin = Math.max(0, endMin-anchorEnd);
+    extraNightMin = 0;
+    if(preExtraMin>0) extraNightMin += nightOverlap(startMin, anchorStart);
+    if(postExtraMin>0) extraNightMin += nightOverlap(anchorEnd, endMin);
+    extraDayMin = Math.max(0, (preExtraMin+postExtraMin)-extraNightMin);
+  } else {
+    var ordinaryEnd = Math.min(endMin, startMin+thresholdMin);
+    ordinaryDur = Math.max(0, ordinaryEnd-startMin);
+    var extraStart = ordinaryEnd;
+    var extraDur = Math.max(0, endMin-extraStart);
+    rnMin = nightOverlap(startMin, ordinaryEnd);
+    extraNightMin = nightOverlap(extraStart, endMin);
+    extraDayMin = Math.max(0, extraDur-extraNightMin);
+  }
 
   res.recNocturno = rnMin/60;
 
