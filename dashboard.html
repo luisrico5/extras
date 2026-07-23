@@ -637,6 +637,7 @@ function calculateDay(jornada, ingreso, salida, isFestivo, isDomingo, isSabado){
   var isTurno = jornada.indexOf("Turno") === 0;
   var isOrdinaria = jornada === "Ordinaria";
   var isDescanso = jornada === "Descanso";
+  if(isDescanso && (endMin - startMin) <= 240) endMin = startMin + 240;
 
   var restRegime = (isTurno && (dayType==="domingo" || dayType==="festivo"))
                  || (isOrdinaria && (dayType==="sabado" || dayType==="domingo" || dayType==="festivo"))
