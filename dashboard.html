@@ -465,6 +465,7 @@ td.td-novedad{white-space:normal;text-align:left;max-width:240px;}
       <p class="sync-status" id="syncLoggedEmail"></p>
       <button class="btn-sync-action" id="btnSyncLogout" type="button">Cerrar sesión</button>
       <button class="btn-sync-action" id="btnResetSyncConfig" type="button">Cambiar configuración</button>
+      <button class="btn-sync-action" id="btnCopyConfigLink" type="button">📋 Copiar enlace para celular</button>
     </div>
   </div>
 </div>
@@ -828,6 +829,16 @@ function detachCloudListener(){
 }
 
 function initSync(){
+  var hashMatch = location.hash.match(/[#&]sync-cfg=([A-Za-z0-9+/=]+)/);
+  if(hashMatch){
+    try{
+      var imported = JSON.parse(atob(hashMatch[1]));
+      if(imported && imported.apiKey){
+        localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(imported));
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+    }catch(e){}
+  }
   var cfg = getSyncConfig();
   if(!cfg){
     setSyncStatus("Sin configurar. Tus datos se guardan solo en este dispositivo.");
@@ -915,6 +926,7 @@ var syncLoggedBlock = document.getElementById("syncLoggedBlock");
 var syncLoggedEmail = document.getElementById("syncLoggedEmail");
 var btnSyncLogout = document.getElementById("btnSyncLogout");
 var btnResetSyncConfig = document.getElementById("btnResetSyncConfig");
+var btnCopyConfigLink = document.getElementById("btnCopyConfigLink");
 
 var currentPeriodDays = [];
 
@@ -955,6 +967,16 @@ function wireSyncUI(){
     syncLoggedBlock.style.display = "none";
     syncConfigInput.value = "";
     setSyncStatus("Sin configurar. Tus datos se guardan solo en este dispositivo.");
+  });
+  btnCopyConfigLink.addEventListener("click", function(){
+    var cfg = getSyncConfig();
+    if(!cfg){ setSyncStatus("No hay configuración guardada."); return; }
+    var url = location.href.split("#")[0] + "#sync-cfg=" + btoa(JSON.stringify(cfg));
+    navigator.clipboard.writeText(url).then(function(){
+      setSyncStatus("¡Enlace copiado! Ábrelo en el celular y solo tendrás que iniciar sesión.");
+    }).catch(function(){
+      prompt("Copia este enlace y ábrelo en el celular:", url);
+    });
   });
 }
 
