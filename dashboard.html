@@ -1452,6 +1452,15 @@ if(document.readyState === "loading"){
   init();
 }
 
+// Reconectar listener cuando la pestaña vuelve al frente (móvil pausa tabs en background)
+document.addEventListener("visibilitychange", function(){
+  if(!document.hidden && syncUid && syncDb) attachCloudListener(syncUid);
+});
+// iOS Safari restaura páginas desde bfcache sin re-ejecutar JS
+window.addEventListener("pageshow", function(e){
+  if(e.persisted && syncUid && syncDb) attachCloudListener(syncUid);
+});
+
 })();
 </script>
 </body>
